@@ -6,4 +6,6 @@ A planner app.
 
 # Notes
 
+Currently in-progress.
+
 # Planner
