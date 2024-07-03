@@ -21,17 +21,58 @@ import { Switch } from "@nextui-org/react";
 import { IoMoon } from "react-icons/io5";
 import { MdWbSunny } from "react-icons/md";
 import { useLocation } from "react-router-dom";
+import { Button } from "@nextui-org/react";
+import { useAuth } from "../../contexts/AuthContext";
+import {
+  signInWithGooglePopup,
+  signOutofGoogle,
+} from "../../utils/firebase.utils";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "../../utils/firebase.utils";
 
 export default function TopNav() {
   const { darkMode, toggleDarkMode } = useTheme();
   const [isMenuOpen] = React.useState();
   const location = useLocation();
-  console.log(location);
+  const { user } = useAuth();
 
   const menuItems = [
     { label: "To-do", link: "/todo" },
     { label: "Notes", link: "/notes" },
   ];
+
+  const handleSignIn = async () => {
+    try {
+      const response = await signInWithGooglePopup();
+      console.log(response);
+      console.log(response.user.uid);
+      if (response) {
+        try {
+          const userRef = doc(db, "users", `${response.user.uid}`);
+          await setDoc(
+            userRef,
+            {
+              name: response.user.displayName,
+              email: response.user.email,
+            },
+            { merge: true }
+          );
+        } catch (e) {
+          console.error("Error adding document: ", e);
+        }
+      }
+    } catch (error) {
+      console.error("Error signing in: ", error);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOutofGoogle();
+    } catch (error) {
+      console.error("Error signing out: ", error);
+    }
+  };
 
   return (
     <Navbar disableAnimation={false} isBordered>
@@ -77,38 +118,46 @@ export default function TopNav() {
         <Switch
           isSelected={darkMode}
           size="sm"
-          color="secondary"
+          color="primary"
           startContent={<MdWbSunny></MdWbSunny>}
           endContent={<IoMoon></IoMoon>}
           onChange={toggleDarkMode}
         ></Switch>
-        <Dropdown
-          className={`${darkMode ? "dark" : ""} text-foreground bg-background`}
-          placement="bottom-end"
-        >
-          <DropdownTrigger>
-            <Avatar
-              isBordered
-              as="button"
-              className="transition-transform"
-              color="secondary"
-              name="Jason Hughes"
-              size="sm"
-              src="https://i.pravatar.cc/150?u=a042581f4e29026704d"
-            />
-          </DropdownTrigger>
-          <DropdownMenu aria-label="Profile Actions" variant="flat">
-            <DropdownItem key="profile" className="h-14 gap-2">
-              <p className="font-semibold">Signed in as</p>
-              <p className="font-semibold">zoey@example.com</p>
-            </DropdownItem>
-            <DropdownItem key="settings">Settings</DropdownItem>
-            <DropdownItem key="help_and_feedback">Help & Feedback</DropdownItem>
-            <DropdownItem key="logout" color="danger">
-              Log Out
-            </DropdownItem>
-          </DropdownMenu>
-        </Dropdown>
+        {!user ? (
+          <Button onClick={handleSignIn}>Sign in</Button>
+        ) : (
+          <Dropdown
+            className={`${
+              darkMode ? "dark" : ""
+            } text-foreground bg-background`}
+            placement="bottom-end"
+          >
+            <DropdownTrigger>
+              <Avatar
+                isBordered
+                as="button"
+                className="transition-transform"
+                color="primary"
+                name={user.displayName ? user.displayName : undefined}
+                size="sm"
+                src={user.photoURL ? user.photoURL : undefined}
+              />
+            </DropdownTrigger>
+            <DropdownMenu aria-label="Profile Actions" variant="flat">
+              <DropdownItem key="profile" className="h-14 gap-2">
+                <p className="font-semibold">Signed in as</p>
+                <p className="font-semibold">{user.email}</p>
+              </DropdownItem>
+              <DropdownItem key="settings">Settings</DropdownItem>
+              <DropdownItem key="help_and_feedback">
+                Help & Feedback
+              </DropdownItem>
+              <DropdownItem onClick={handleSignOut} key="logout" color="danger">
+                Log Out
+              </DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
+        )}
       </NavbarContent>
       <NavbarMenu
         className={`${darkMode ? "dark" : ""} text-foreground bg-background`}

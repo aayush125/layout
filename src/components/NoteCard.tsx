@@ -11,19 +11,46 @@ import {
 } from "@nextui-org/react";
 import { Textarea } from "@nextui-org/react";
 import { ScrollShadow } from "@nextui-org/react";
+import { Input } from "@nextui-org/react";
+import { Timestamp, doc, setDoc, deleteDoc } from "firebase/firestore";
+import formatDate from "../utils/utils";
+import { useAuth } from "../contexts/AuthContext";
+import { db } from "../utils/firebase.utils";
+import { Spinner } from "@nextui-org/react";
+// const AddNote: React.FC<AddNoteCardProps> = ({ onAddNote }) => {
+
+// export default function NoteCard(props: Note, onDelete) {
 
 interface Note {
+  id: string;
   title: string;
-  timestamp: Date | null;
+  timestamp: Timestamp | null;
   content: string;
 }
 
-export default function NoteCard(props: Note) {
+interface NoteCardProps {
+  props: Note;
+  onDelete: (noteID: string) => void;
+}
+
+const NoteCard: React.FC<NoteCardProps> = ({ props, onDelete }) => {
   const { darkMode } = useTheme();
+  const { user } = useAuth();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [editing, setEditing] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
   const [note, setNote] = React.useState<Note>(props);
   const [editedNote, setEditedNote] = React.useState<Note>(props);
+  const [saving, setSaving] = React.useState(false);
+
+  const handleTitleChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ): void => {
+    setEditedNote((prevNote: Note) => ({
+      ...prevNote,
+      title: event.target.value,
+    }));
+  };
 
   const handleContentChange = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -34,9 +61,36 @@ export default function NoteCard(props: Note) {
     }));
   };
 
-  const handleSave = (): void => {
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const noteRef = doc(db, `users/${user?.uid}/notes`, `${props.id}`);
+      await setDoc(noteRef, {
+        title: editedNote.title,
+        timestamp: editedNote.timestamp,
+        content: editedNote.content,
+      });
+      console.log("Edited and saved with id: ", noteRef.id);
+    } catch (e) {
+      console.error("Error adding document: ", e);
+    } finally {
+      setSaving(false);
+    }
     setNote(editedNote);
     setEditing(false);
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const noteRef = doc(db, `users/${user?.uid}/notes`, `${props.id}`);
+      await deleteDoc(noteRef);
+      console.log("Note deleted successfully.");
+    } catch (e) {
+      console.error("Error deleting note: ", e);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleClose = (): void => {
@@ -53,10 +107,15 @@ export default function NoteCard(props: Note) {
              transition-all duration-300 ease-in-out
              flex items-center justify-center
              cursor-pointer
-             focus:outline-none focus:ring-2 focus:ring-offset-2
-             ${darkMode ? "focus:ring-gray-400" : "focus:ring-gray-500"}
+             focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+             ${
+               darkMode
+                 ? "focus-visible:ring-gray-400"
+                 : "focus-visible:ring-gray-500"
+             }
              group`}
         style={{ height: "248px", width: "100%" }}
+        onMouseDown={(e) => e.preventDefault()}
         onClick={onOpen}
         aria-label="Note Card"
       >
@@ -73,7 +132,7 @@ export default function NoteCard(props: Note) {
                      ${darkMode ? "text-gray-400" : "text-gray-600"}
                      transition-colors duration-300 ease-in-out`}
           >
-            {note.timestamp ? note.timestamp.toString() : ""}
+            {note.timestamp ? formatDate(note.timestamp.toDate()) : ""}
           </p>
           <div className="h-32 overflow-hidden">
             <p
@@ -105,13 +164,23 @@ export default function NoteCard(props: Note) {
           {(onClose) => (
             <>
               <ModalHeader className="flex flex-col gap-1">
-                <p>{note.title}</p>
+                {editing ? (
+                  <Input
+                    type="text"
+                    variant="underlined"
+                    placeholder="Title"
+                    value={editedNote.title}
+                    onChange={handleTitleChange}
+                  />
+                ) : (
+                  <p>{note.title}</p>
+                )}
                 <p
                   className={`text-sm font-thin
                            ${darkMode ? "text-gray-400" : "text-gray-600"}
                            transition-colors duration-300 ease-in-out`}
                 >
-                  {note.timestamp ? note.timestamp.toString() : ""}
+                  {note.timestamp ? formatDate(note.timestamp.toDate()) : ""}
                 </p>
               </ModalHeader>
               <ModalBody>
@@ -150,20 +219,29 @@ export default function NoteCard(props: Note) {
                 >
                   Close
                 </Button>
-                <Button color="danger" variant="light">
-                  Delete
+                <Button
+                  onClick={async () => {
+                    await handleDelete();
+                    onDelete(props.id);
+                    onClose();
+                  }}
+                  color="danger"
+                  variant="light"
+                >
+                  {deleting ? <Spinner size="sm" color="danger" /> : "Delete"}
                 </Button>
                 <Button
                   color="primary"
-                  onPress={() => {
+                  onPress={async () => {
                     if (editing) {
-                      handleSave();
+                      await handleSave();
                     } else {
                       setEditing(true);
                     }
                   }}
+                  isLoading={saving}
                 >
-                  {editing ? "Save" : "Edit"}
+                  {editing ? (saving ? "" : "Save") : "Edit"}
                 </Button>
               </ModalFooter>
             </>
@@ -172,4 +250,6 @@ export default function NoteCard(props: Note) {
       </Modal>
     </>
   );
-}
+};
+
+export default NoteCard;
