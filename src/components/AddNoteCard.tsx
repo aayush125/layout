@@ -11,23 +11,23 @@ import {
 } from "@nextui-org/react";
 import { Textarea } from "@nextui-org/react";
 import { Input } from "@nextui-org/react";
-import { doc, setDoc, addDoc, collection, Timestamp } from "firebase/firestore";
-import { db } from "../utils/firebase.utils";
-import { useAuth } from "../contexts/AuthContext";
-import formatDate from "../utils/utils";
-import { Spinner } from "@nextui-org/react";
+import { Timestamp } from "firebase/firestore";
 
 interface Note {
   title: string;
   timestamp: Timestamp | null;
   content: string;
+  edited: boolean;
+  editedTimestamp: Timestamp | null;
 }
 
 interface AddNoteCardProps {
   onAddNote: (
     title: string,
     timestamp: Timestamp,
-    content: string
+    content: string,
+    edited: boolean,
+    editedTimestamp: Timestamp | null
   ) => Promise<void>;
 }
 
@@ -39,6 +39,8 @@ const AddNote: React.FC<AddNoteCardProps> = ({ onAddNote }) => {
     title: "",
     timestamp: null,
     content: "",
+    edited: false,
+    editedTimestamp: null,
   });
   // const { user, loading } = useAuth();
 
@@ -69,14 +71,26 @@ const AddNote: React.FC<AddNoteCardProps> = ({ onAddNote }) => {
     //   console.error("Error adding document: ", e);
     // }
     try {
-      await onAddNote(note.title, note.timestamp, note.content);
+      await onAddNote(
+        note.title,
+        note.timestamp,
+        note.content,
+        note.edited,
+        note.editedTimestamp
+      );
     } catch (e) {
       console.error("Error saving note: ", e);
     } finally {
       setSubmitting(false);
     }
 
-    setNote({ title: "", timestamp: null, content: "" });
+    setNote({
+      title: "",
+      timestamp: null,
+      content: "",
+      edited: false,
+      editedTimestamp: null,
+    });
   };
 
   return (
@@ -130,7 +144,7 @@ const AddNote: React.FC<AddNoteCardProps> = ({ onAddNote }) => {
                 <Textarea
                   variant="bordered"
                   labelPlacement="outside"
-                  placeholder="Enter your note here"
+                  placeholder="Write your note here"
                   className="max-w-xl"
                   value={note.content}
                   minRows={8}

@@ -26,6 +26,8 @@ interface Note {
   title: string;
   timestamp: Timestamp | null;
   content: string;
+  edited: boolean;
+  editedTimestamp: Timestamp | null;
 }
 
 interface NoteCardProps {
@@ -39,6 +41,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ props, onDelete }) => {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [editing, setEditing] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
+  const [deletePressed, setDeletePressed] = React.useState(false);
   const [note, setNote] = React.useState<Note>(props);
   const [editedNote, setEditedNote] = React.useState<Note>(props);
   const [saving, setSaving] = React.useState(false);
@@ -69,6 +72,8 @@ const NoteCard: React.FC<NoteCardProps> = ({ props, onDelete }) => {
         title: editedNote.title,
         timestamp: editedNote.timestamp,
         content: editedNote.content,
+        edited: true,
+        editedTimestamp: Timestamp.now(),
       });
       console.log("Edited and saved with id: ", noteRef.id);
     } catch (e) {
@@ -76,6 +81,8 @@ const NoteCard: React.FC<NoteCardProps> = ({ props, onDelete }) => {
     } finally {
       setSaving(false);
     }
+    editedNote.edited = true;
+    editedNote.editedTimestamp = Timestamp.now();
     setNote(editedNote);
     setEditing(false);
   };
@@ -96,6 +103,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ props, onDelete }) => {
   const handleClose = (): void => {
     setEditedNote(note);
     setEditing(false);
+    setDeletePressed(false);
   };
 
   return (
@@ -132,15 +140,25 @@ const NoteCard: React.FC<NoteCardProps> = ({ props, onDelete }) => {
                      ${darkMode ? "text-gray-400" : "text-gray-600"}
                      transition-colors duration-300 ease-in-out`}
           >
-            {note.timestamp ? formatDate(note.timestamp.toDate()) : ""}
+            {/* {note.timestamp ? formatDate(note.timestamp.toDate()) : ""} */}
+            {note.edited
+              ? note.editedTimestamp
+                ? "Edited: " + formatDate(note.editedTimestamp.toDate())
+                : ""
+              : note.timestamp
+              ? formatDate(note.timestamp.toDate())
+              : ""}
           </p>
           <div className="h-32 overflow-hidden">
-            <p
-              className={`${darkMode ? "text-gray-300" : "text-gray-700"}
+            <pre
+              className={`whitespace-pre-wrap break-words ${
+                darkMode ? "text-gray-300" : "text-gray-700"
+              }
                          transition-colors duration-300 ease-in-out`}
+              style={{ fontFamily: "inherit" }}
             >
               {note.content}
-            </p>
+            </pre>
           </div>
           <div
             className={`absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t
@@ -176,11 +194,22 @@ const NoteCard: React.FC<NoteCardProps> = ({ props, onDelete }) => {
                   <p>{note.title}</p>
                 )}
                 <p
-                  className={`text-sm font-thin
+                  className={`whitespace-pre-wrap text-sm font-thin
                            ${darkMode ? "text-gray-400" : "text-gray-600"}
                            transition-colors duration-300 ease-in-out`}
                 >
-                  {note.timestamp ? formatDate(note.timestamp.toDate()) : ""}
+                  {note.edited
+                    ? note.editedTimestamp
+                      ? "Created: " +
+                        (note.timestamp
+                          ? formatDate(note.timestamp.toDate())
+                          : "") +
+                        "\nEdited: " +
+                        formatDate(note.editedTimestamp.toDate())
+                      : ""
+                    : note.timestamp
+                    ? formatDate(note.timestamp.toDate())
+                    : ""}
                 </p>
               </ModalHeader>
               <ModalBody>
@@ -196,7 +225,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ props, onDelete }) => {
                     onChange={handleContentChange}
                   />
                 ) : (
-                  <ScrollShadow className="w-full max-h-[350px]">
+                  <ScrollShadow offset={1} className="w-full max-h-[350px]">
                     <pre
                       className={`whitespace-pre-wrap break-words
                               ${darkMode ? "text-gray-300" : "text-gray-700"}
@@ -209,27 +238,57 @@ const NoteCard: React.FC<NoteCardProps> = ({ props, onDelete }) => {
                 )}
               </ModalBody>
               <ModalFooter>
-                <Button
-                  color="default"
-                  variant="light"
-                  onPress={() => {
-                    handleClose();
-                    onClose();
-                  }}
-                >
-                  Close
-                </Button>
-                <Button
-                  onClick={async () => {
-                    await handleDelete();
-                    onDelete(props.id);
-                    onClose();
-                  }}
-                  color="danger"
-                  variant="light"
-                >
-                  {deleting ? <Spinner size="sm" color="danger" /> : "Delete"}
-                </Button>
+                {editing ? (
+                  <Button
+                    color="default"
+                    variant="light"
+                    onPress={() => {
+                      handleClose();
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      color="default"
+                      variant="light"
+                      onPress={() => {
+                        handleClose();
+                        onClose();
+                      }}
+                    >
+                      Close
+                    </Button>
+                    {!deletePressed ? (
+                      <Button
+                        onPress={() => {
+                          setDeletePressed(true);
+                        }}
+                        color="danger"
+                        variant="light"
+                      >
+                        Delete
+                      </Button>
+                    ) : (
+                      <Button
+                        onPress={async () => {
+                          await handleDelete();
+                          onDelete(props.id);
+                          onClose();
+                        }}
+                        color="danger"
+                        variant="light"
+                      >
+                        {deleting ? (
+                          <Spinner size="sm" color="danger" />
+                        ) : (
+                          "Sure?"
+                        )}
+                      </Button>
+                    )}
+                  </>
+                )}
                 <Button
                   color="primary"
                   onPress={async () => {

@@ -3,7 +3,6 @@ import AddNote from "../components/AddNoteCard";
 import {
   collection,
   query,
-  where,
   getDocs,
   addDoc,
   Timestamp,
@@ -11,7 +10,7 @@ import {
 } from "firebase/firestore";
 import { useAuth } from "../contexts/AuthContext";
 import { db } from "../utils/firebase.utils";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import LoadingSpinner from "../components/LoadingSpinner";
 
 interface Note {
@@ -19,10 +18,12 @@ interface Note {
   title: string;
   timestamp: Timestamp | null;
   content: string;
+  edited: boolean;
+  editedTimestamp: Timestamp | null;
 }
 
 export default function Notes() {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const [fetchingNotes, setFetchingNotes] = useState(false);
   const [notes, setNotes] = useState<Note[]>([]);
 
@@ -42,6 +43,8 @@ export default function Notes() {
             title: doc.data().title,
             timestamp: doc.data().timestamp,
             content: doc.data().content,
+            edited: doc.data().edited ? doc.data().edited : false,
+            editedTimestamp: doc.data().editedTimestamp,
           }));
           setNotes(fetchedNotes);
           console.log(notes);
@@ -68,7 +71,9 @@ export default function Notes() {
   const addNote = async (
     title: string,
     timestamp: Timestamp,
-    content: string
+    content: string,
+    edited: boolean,
+    editedTimestamp: Timestamp | null
   ) => {
     if (user?.uid) {
       try {
@@ -76,6 +81,8 @@ export default function Notes() {
           title,
           timestamp,
           content,
+          edited,
+          editedTimestamp,
         };
         const noteRef = await addDoc(
           collection(db, `users/${user?.uid}/notes`),
@@ -104,6 +111,8 @@ export default function Notes() {
                   title: note.title,
                   timestamp: note.timestamp,
                   content: note.content,
+                  edited: note.edited,
+                  editedTimestamp: note.editedTimestamp,
                 }}
                 onDelete={onDelete}
               />
