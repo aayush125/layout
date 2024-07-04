@@ -17,9 +17,8 @@ import formatDate from "../utils/utils";
 import { useAuth } from "../contexts/AuthContext";
 import { db } from "../utils/firebase.utils";
 import { Spinner } from "@nextui-org/react";
-// const AddNote: React.FC<AddNoteCardProps> = ({ onAddNote }) => {
-
-// export default function NoteCard(props: Note, onDelete) {
+import { FaTag } from "react-icons/fa6";
+import { Chip } from "@nextui-org/react";
 
 interface Note {
   id: string;
@@ -28,11 +27,12 @@ interface Note {
   content: string;
   edited: boolean;
   editedTimestamp: Timestamp | null;
+  tag: string;
 }
 
 interface NoteCardProps {
   props: Note;
-  onDelete: (noteID: string) => void;
+  onDelete: (noteID: string) => Promise<void>;
 }
 
 const NoteCard: React.FC<NoteCardProps> = ({ props, onDelete }) => {
@@ -74,6 +74,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ props, onDelete }) => {
         content: editedNote.content,
         edited: true,
         editedTimestamp: Timestamp.now(),
+        tag: editedNote.tag,
       });
       console.log("Edited and saved with id: ", noteRef.id);
     } catch (e) {
@@ -140,7 +141,6 @@ const NoteCard: React.FC<NoteCardProps> = ({ props, onDelete }) => {
                      ${darkMode ? "text-gray-400" : "text-gray-600"}
                      transition-colors duration-300 ease-in-out`}
           >
-            {/* {note.timestamp ? formatDate(note.timestamp.toDate()) : ""} */}
             {note.edited
               ? note.editedTimestamp
                 ? "Edited: " + formatDate(note.editedTimestamp.toDate())
@@ -211,6 +211,15 @@ const NoteCard: React.FC<NoteCardProps> = ({ props, onDelete }) => {
                     ? formatDate(note.timestamp.toDate())
                     : ""}
                 </p>
+                <Chip
+                  startContent={<FaTag />}
+                  variant="solid"
+                  color="primary"
+                  size="sm"
+                  radius="md"
+                >
+                  {note.tag}
+                </Chip>
               </ModalHeader>
               <ModalBody>
                 {editing ? (
@@ -274,7 +283,7 @@ const NoteCard: React.FC<NoteCardProps> = ({ props, onDelete }) => {
                       <Button
                         onPress={async () => {
                           await handleDelete();
-                          onDelete(props.id);
+                          await onDelete(props.id);
                           onClose();
                         }}
                         color="danger"

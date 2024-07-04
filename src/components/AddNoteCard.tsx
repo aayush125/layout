@@ -8,6 +8,8 @@ import {
   ModalFooter,
   Button,
   useDisclosure,
+  Autocomplete,
+  AutocompleteItem,
 } from "@nextui-org/react";
 import { Textarea } from "@nextui-org/react";
 import { Input } from "@nextui-org/react";
@@ -19,6 +21,7 @@ interface Note {
   content: string;
   edited: boolean;
   editedTimestamp: Timestamp | null;
+  tag: string;
 }
 
 interface AddNoteCardProps {
@@ -27,11 +30,13 @@ interface AddNoteCardProps {
     timestamp: Timestamp,
     content: string,
     edited: boolean,
-    editedTimestamp: Timestamp | null
+    editedTimestamp: Timestamp | null,
+    tag: string
   ) => Promise<void>;
+  tags: string[];
 }
 
-const AddNote: React.FC<AddNoteCardProps> = ({ onAddNote }) => {
+const AddNote: React.FC<AddNoteCardProps> = ({ onAddNote, tags }) => {
   const { darkMode } = useTheme();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [submitting, setSubmitting] = React.useState(false);
@@ -41,8 +46,9 @@ const AddNote: React.FC<AddNoteCardProps> = ({ onAddNote }) => {
     content: "",
     edited: false,
     editedTimestamp: null,
+    tag: "",
   });
-  // const { user, loading } = useAuth();
+  const [selectedTag, setSelectedTag] = React.useState("");
 
   const handleTitleChange = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -62,21 +68,15 @@ const AddNote: React.FC<AddNoteCardProps> = ({ onAddNote }) => {
     console.log("Title: ", note.title);
     console.log("Content: ", note.content);
     note.timestamp = Timestamp.now();
-    // try {
-    //   const noteRef = await addDoc(collection(db, `users/${user?.uid}/notes`), {
-    //     ...note,
-    //   });
-    //   console.log("Document written with ID: ", noteRef.id);
-    // } catch (e) {
-    //   console.error("Error adding document: ", e);
-    // }
+    note.tag = selectedTag;
     try {
       await onAddNote(
         note.title,
         note.timestamp,
         note.content,
         note.edited,
-        note.editedTimestamp
+        note.editedTimestamp,
+        note.tag ? note.tag : ""
       );
     } catch (e) {
       console.error("Error saving note: ", e);
@@ -90,6 +90,7 @@ const AddNote: React.FC<AddNoteCardProps> = ({ onAddNote }) => {
       content: "",
       edited: false,
       editedTimestamp: null,
+      tag: "",
     });
   };
 
@@ -132,13 +133,36 @@ const AddNote: React.FC<AddNoteCardProps> = ({ onAddNote }) => {
             <>
               <ModalHeader className="flex flex-col gap-1">
                 <p>Add a note</p>
-                <Input
-                  type="text"
-                  variant="underlined"
-                  placeholder="Title"
-                  value={note.title}
-                  onChange={handleTitleChange}
-                />
+                <div>
+                  <Input
+                    type="text"
+                    variant="underlined"
+                    placeholder="Title"
+                    value={note.title}
+                    onChange={handleTitleChange}
+                  />
+                  <Autocomplete
+                    variant="bordered"
+                    className={`mt-2 ${
+                      darkMode ? "dark" : ""
+                    } text-foreground bg-background`}
+                    aria-label="Select Tag"
+                    placeholder="Select or create a tag"
+                    allowsCustomValue
+                    onInputChange={(value) => {
+                      setSelectedTag(value);
+                    }}
+                    popoverProps={{
+                      className: darkMode
+                        ? "dark text-foreground bg-background"
+                        : "text-foreground bg-background",
+                    }}
+                  >
+                    {tags.map((tag) => (
+                      <AutocompleteItem key={tag}>{tag}</AutocompleteItem>
+                    ))}
+                  </Autocomplete>
+                </div>
               </ModalHeader>
               <ModalBody>
                 <Textarea

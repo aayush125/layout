@@ -54,6 +54,7 @@ export default function TopNav() {
             {
               name: response.user.displayName,
               email: response.user.email,
+              noteTags: [],
             },
             { merge: true }
           );
