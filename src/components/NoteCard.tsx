@@ -211,15 +211,17 @@ const NoteCard: React.FC<NoteCardProps> = ({ props, onDelete }) => {
                     ? formatDate(note.timestamp.toDate())
                     : ""}
                 </p>
-                <Chip
-                  startContent={<FaTag />}
-                  variant="solid"
-                  color="primary"
-                  size="sm"
-                  radius="md"
-                >
-                  {note.tag}
-                </Chip>
+                {!note.tag || note.tag === "" ? null : (
+                  <Chip
+                    startContent={<FaTag />}
+                    variant="solid"
+                    color="primary"
+                    size="sm"
+                    radius="md"
+                  >
+                    {note.tag}
+                  </Chip>
+                )}
               </ModalHeader>
               <ModalBody>
                 {editing ? (

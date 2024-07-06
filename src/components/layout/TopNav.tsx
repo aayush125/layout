@@ -27,7 +27,7 @@ import {
   signInWithGooglePopup,
   signOutofGoogle,
 } from "../../utils/firebase.utils";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase.utils";
 
 export default function TopNav() {
@@ -49,15 +49,21 @@ export default function TopNav() {
       if (response) {
         try {
           const userRef = doc(db, "users", `${response.user.uid}`);
-          await setDoc(
-            userRef,
-            {
+          const userSnap = await getDoc(userRef);
+
+          if (userSnap.exists()) {
+            await setDoc(
+              userRef,
+              { name: response.user.displayName, email: response.user.email },
+              { merge: true }
+            );
+          } else {
+            await setDoc(userRef, {
               name: response.user.displayName,
               email: response.user.email,
               noteTags: [],
-            },
-            { merge: true }
-          );
+            });
+          }
         } catch (e) {
           console.error("Error adding document: ", e);
         }
