@@ -13,7 +13,7 @@ import { Textarea } from "@nextui-org/react";
 import { ScrollShadow } from "@nextui-org/react";
 import { Input } from "@nextui-org/react";
 import { Timestamp, doc, setDoc, deleteDoc } from "firebase/firestore";
-import formatDate from "../utils/utils";
+import { formatDate } from "../utils/utils";
 import { useAuth } from "../contexts/AuthContext";
 import { db } from "../utils/firebase.utils";
 import { Spinner } from "@nextui-org/react";

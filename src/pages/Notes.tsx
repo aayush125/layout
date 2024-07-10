@@ -292,7 +292,7 @@ export default function Notes() {
                 >
                   {modTags.map((tag, index) => (
                     <div className="flex my-2" key={tag}>
-                      <p className="min-w-[300px]">{tag}</p>
+                      <p className="w-full">{tag}</p>
                       <Button
                         size="sm"
                         variant="bordered"

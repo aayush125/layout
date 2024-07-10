@@ -92,6 +92,7 @@ const AddNote: React.FC<AddNoteCardProps> = ({ onAddNote, tags }) => {
       editedTimestamp: null,
       tag: "",
     });
+    setSubmitting(true);
   };
 
   return (
