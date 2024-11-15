@@ -1,8 +1,9 @@
 import "./App.css";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Home from "./pages/Home";
 import Notes from "./pages/Notes";
 import Todo from "./pages/Todo";
+import Teams from "./pages/Teams";
 import TopNav from "./components/layout/TopNav";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./contexts/AuthContext";
@@ -15,8 +16,19 @@ function App() {
   const { loading } = useAuth();
   const [showNotification, setShowNotification] = useState(false);
   const { darkMode } = useTheme();
+  const location = useLocation();
 
   useEffect(() => {
+    const { search } = location;
+    const params = new URLSearchParams(search);
+    const teamId = params.get("teamId");
+    const teamName = params.get("teamName");
+    const joinToken = params.get("joinToken");
+
+    if (teamId && teamName && joinToken) {
+      // call to handle join team
+    }
+
     if (darkMode) {
       document.body.classList.add("dark");
     } else {
@@ -26,7 +38,7 @@ function App() {
     return () => {
       document.body.classList.remove("dark");
     };
-  }, [darkMode]);
+  }, [darkMode, location]);
 
   if (loading) {
     return <LoadingSpinner />;
@@ -48,6 +60,7 @@ function App() {
         >
           <Route path="/notes" element={<Notes />} />
           <Route path="/todo" element={<Todo />} />
+          <Route path="/teams" element={<Teams />} />
         </Route>
       </Routes>
       <NotificationPopup

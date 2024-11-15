@@ -13,12 +13,17 @@ import {
 } from "@nextui-org/react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useState } from "react";
-import { now, getLocalTimeZone, ZonedDateTime } from "@internationalized/date";
-import { toFireStoreTimestamp } from "../../utils/utils";
+import {
+  now,
+  getLocalTimeZone,
+  ZonedDateTime,
+  today,
+} from "@internationalized/date";
+import { toFireStoreTimestamp, isValidEmail } from "../../utils/utils";
 import { Timestamp } from "firebase/firestore";
 import { Task } from "../../utils/interfaces";
 
-interface AddTaskProps {
+export interface AddTaskProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (
@@ -35,6 +40,7 @@ const AddTask: React.FC<AddTaskProps> = ({ isOpen, onClose, onSubmit }) => {
   const { darkMode } = useTheme();
   const [submitting, setSubmitting] = useState(false);
   const [dateChanged, setDateChanged] = useState(false);
+  const [emailInvalid, setEmailInvalid] = useState(false);
   const [task, setTask] = useState<Task>({
     name: "",
     description: "",
@@ -42,6 +48,7 @@ const AddTask: React.FC<AddTaskProps> = ({ isOpen, onClose, onSubmit }) => {
     due_date: Timestamp.now(),
     complete_status: false,
     assigned_to: null,
+    id: "",
   });
 
   const handleNameChange = (
@@ -52,7 +59,6 @@ const AddTask: React.FC<AddTaskProps> = ({ isOpen, onClose, onSubmit }) => {
 
   const handleDateChange = (date: ZonedDateTime): void => {
     setDateChanged(true);
-    console.log(date.toString());
     setTask((prevTask: Task) => ({
       ...prevTask,
       due_date: toFireStoreTimestamp(date),
@@ -60,10 +66,16 @@ const AddTask: React.FC<AddTaskProps> = ({ isOpen, onClose, onSubmit }) => {
   };
 
   const handleAssignedChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    let email = event.target.value.trim().toLowerCase();
     setTask((prevTask: Task) => ({
       ...prevTask,
-      assigned_to: event.target.value,
+      assigned_to: email,
     }));
+    if (!isValidEmail(email)) {
+      setEmailInvalid(true);
+    } else {
+      setEmailInvalid(false);
+    }
   };
 
   const handleDescriptionChange = (
@@ -89,7 +101,6 @@ const AddTask: React.FC<AddTaskProps> = ({ isOpen, onClose, onSubmit }) => {
   };
 
   const onTaskModalClose = () => {
-    onClose();
     setTask({
       name: "",
       description: "",
@@ -97,8 +108,11 @@ const AddTask: React.FC<AddTaskProps> = ({ isOpen, onClose, onSubmit }) => {
       due_date: Timestamp.now(),
       complete_status: false,
       assigned_to: null,
+      id: "",
     });
     setDateChanged(false);
+    setEmailInvalid(false);
+    onClose();
   };
 
   return (
@@ -131,16 +145,10 @@ const AddTask: React.FC<AddTaskProps> = ({ isOpen, onClose, onSubmit }) => {
                       variant="underlined"
                       label="Due date"
                       hideTimeZone
+                      minValue={today(getLocalTimeZone())}
+                      hourCycle={24}
                       defaultValue={now(getLocalTimeZone())}
                       onChange={handleDateChange}
-                    />
-                    <Input
-                      type="text"
-                      label="Assign to (optional)"
-                      variant="underlined"
-                      placeholder="Email"
-                      value={task.assigned_to ? task.assigned_to : ""}
-                      onChange={handleAssignedChange}
                     />
                   </div>
                   <RadioGroup

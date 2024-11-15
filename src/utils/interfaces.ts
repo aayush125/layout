@@ -8,12 +8,12 @@ export interface Task {
   complete_status: boolean;
   assigned_to?: string | null;
   assigned_by?: string | null;
+  id?: string;
+  type?: string;
 }
 
 export interface GroupedTasks {
-  later: Task[];
-  tomorrow: Task[];
+  pending: Task[];
   today: Task[];
-  yesterday: Task[];
-  older: Task[];
+  overdue: Task[];
 }
