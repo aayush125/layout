@@ -31,6 +31,39 @@ import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase.utils";
 import { useNavigate } from "react-router-dom";
 
+export const handleSignIn = async () => {
+  try {
+    const response = await signInWithGooglePopup();
+    console.log(response);
+    console.log(response.user.uid);
+    if (response) {
+      try {
+        const userRef = doc(db, "users", `${response.user.uid}`);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          await setDoc(
+            userRef,
+            { name: response.user.displayName, email: response.user.email },
+            { merge: true }
+          );
+        } else {
+          await setDoc(userRef, {
+            name: response.user.displayName,
+            email: response.user.email,
+            noteTags: [],
+          });
+        }
+      } catch (e) {
+        console.error("Error adding document: ", e);
+      }
+      useNavigate()("/notes");
+    }
+  } catch (error) {
+    console.error("Error signing in: ", error);
+  }
+};
+
 export default function TopNav() {
   const { darkMode, toggleDarkMode } = useTheme();
   const [isMenuOpen] = React.useState();
@@ -42,38 +75,6 @@ export default function TopNav() {
     { label: "To-do", link: "/todo" },
     { label: "Notes", link: "/notes" },
   ];
-
-  const handleSignIn = async () => {
-    try {
-      const response = await signInWithGooglePopup();
-      console.log(response);
-      console.log(response.user.uid);
-      if (response) {
-        try {
-          const userRef = doc(db, "users", `${response.user.uid}`);
-          const userSnap = await getDoc(userRef);
-
-          if (userSnap.exists()) {
-            await setDoc(
-              userRef,
-              { name: response.user.displayName, email: response.user.email },
-              { merge: true }
-            );
-          } else {
-            await setDoc(userRef, {
-              name: response.user.displayName,
-              email: response.user.email,
-              noteTags: [],
-            });
-          }
-        } catch (e) {
-          console.error("Error adding document: ", e);
-        }
-      }
-    } catch (error) {
-      console.error("Error signing in: ", error);
-    }
-  };
 
   const handleSignOut = async () => {
     try {

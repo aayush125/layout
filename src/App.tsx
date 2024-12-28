@@ -25,6 +25,7 @@ function App() {
     const teamName = params.get("teamName");
     const joinToken = params.get("joinToken");
 
+    // Incomplete: 'teams' feature
     if (teamId && teamName && joinToken) {
       // call to handle join team
     }
