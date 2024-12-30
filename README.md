@@ -9,6 +9,7 @@ This is a React.js application built with NextUI for the UI components and Fireb
 - **Task Management**: Add, edit, and delete tasks.
 - **Firebase Integration**: Secure Google Authentication and real-time database via Firestore.
 - **Responsive UI**: Powered by NextUI for a clean and modern interface.
+- **Dark Mode Support**: Seamless transition between light and dark modes for a comfortable user experience.
 
 ## Screenshots
 
@@ -31,6 +32,9 @@ Here are some screenshots of the application:
 
 6. **Tasks View**:
    ![Tasks](./screenshots/tasks.png)
+
+7. **Dark Mode**:
+   ![Dark Mode](./screenshots/dark_mode.png)
 
 ## Installation
 
