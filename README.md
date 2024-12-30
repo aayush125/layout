@@ -1,6 +1,6 @@
-# Notes App with To-Do Management and Tags
+# Planner App
 
-This is a React.js notes application built with NextUI for the UI components and Firebase for Google Authentication and Firestore as the database. The app allows users to take detailed notes, organize them with custom tags, and manage to-do tasks alongside their notes.
+This is a React.js application built with NextUI for the UI components and Firebase for Google Authentication and Firestore as the database. The app allows users to take detailed notes, organize them with custom tags, and manage to-do tasks alongside their notes.
 
 ## Features
 
